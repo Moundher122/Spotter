@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     "navigation",
     "gasstation",
     #---- Third party ----#
-    'django.contrib.gis'
+    "rest_framework",
+    "django.contrib.gis",
 ]
 FUEL_OPTIMIZER = {
     "MAX_RANGE_MILES": 500,          
@@ -137,3 +138,31 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+    "loggers": {
+        "navigation": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}

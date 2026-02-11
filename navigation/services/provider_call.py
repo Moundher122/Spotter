@@ -1,8 +1,13 @@
+import logging
+
 import polyline as polyline_codec
 import requests
 from . import converter
 from .helper import compute_cumulative_distances
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
 
 def get_route(
     start_lat: float,
@@ -10,17 +15,9 @@ def get_route(
     end_lat: float,
     end_lng: float,
 ) -> dict:
-    """
-    Call the OSRM routing API **once** and return:
-
-    - ``encoded_polyline``   – the raw encoded polyline string
-    - ``points``             – decoded list of (lat, lng) tuples
-    - ``cumulative_distances`` – miles from start for every polyline point
-    - ``total_distance_miles`` – total driving distance in miles
-    """
     config = settings.FUEL_OPTIMIZER
     base_url = config["OSRM_BASE_URL"]
-    print(f"Calling OSRM API with URL: {base_url}")
+    logger.debug("Calling OSRM API with URL: %s", base_url)
     url = f"{base_url}/{start_lng},{start_lat};{end_lng},{end_lat}"
     params = {
         "overview": "full",
@@ -37,10 +34,7 @@ def get_route(
     route = data["routes"][0]
     encoded_polyline = route["geometry"]
     total_distance_miles = converter.meters_to_miles(route["distance"])
-    # Decode polyline → list of (lat, lng)
     points = polyline_codec.decode(encoded_polyline)
-
-    # Cumulative distance from start for every point
     cumulative_distances = compute_cumulative_distances(points)
 
     return {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run Django migrations
-uv run manage.py makemigrations logger
+uv run manage.py makemigrations
 uv run manage.py migrate --noinput
 
 echo "Migrations completed successfully!"

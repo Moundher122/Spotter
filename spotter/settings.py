@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -51,7 +51,7 @@ FUEL_OPTIMIZER = {
     "NOMINATIM_URL": "https://nominatim.openstreetmap.org/search",
     "NOMINATIM_USER_AGENT": "FuelOptimizer/1.0",
 }
-
+NOMINATIM_USER_AGENT=config("NOMINATIM_USER_AGENT", default="FuelOptimizer/1.0")
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -61,7 +61,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
+OSRM_BASE_URL=config("OSRM_BASE_URL", default="http://router.project-osrm.org/route/v1/driving")
 ROOT_URLCONF = "spotter.urls"
 
 TEMPLATES = [

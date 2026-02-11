@@ -1,36 +1,27 @@
 import time
-import requests
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
 from django.conf import settings
+
+
+geolocator = Nominatim(
+    user_agent=settings.NOMINATIM_USER_AGENT,
+    timeout=10,
+)
+
+geolocator = Nominatim(
+    user_agent="gasstation_django (bouroumanamoundher@gmail.com)"
+)
+
 
 
 
 def geocode(location_string: str) -> tuple[float, float]:
     """
-    Geocode a US location string to (latitude, longitude) using
-    the OpenStreetMap Nominatim API.
-    Raises ValueError if the location cannot be resolved.
+    Geocode a US location string to (latitude, longitude)
+    using Nominatim agent (geopy).
     """
-    config = settings.FUEL_OPTIMIZER
-    params = {
-        "q": location_string,
-        "format": "json",
-        "limit": 1,
-        "countrycodes": "us",
-    }
-    headers = {
-        "User-Agent": config["NOMINATIM_USER_AGENT"],
-    }
-    response = requests.get(
-        config["NOMINATIM_URL"],
-        params=params,
-        headers=headers,
-        timeout=10,
-    )
-    response.raise_for_status()
-    results = response.json()
-    if not results:
+    location = geolocator.geocode(location_string)
+    if not location:
         raise ValueError(f"Could not geocode location: '{location_string}'")
-    lat = float(results[0]["lat"])
-    lng = float(results[0]["lon"])
-    time.sleep(1.1)
-    return lat, lng
+    return location.latitude, location.longitude

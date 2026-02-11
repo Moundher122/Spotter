@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: spotter-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: spotter_db
+      POSTGRES_USER: spotter_user
+      POSTGRES_PASSWORD: spotter_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

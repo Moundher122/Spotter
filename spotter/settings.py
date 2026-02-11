@@ -43,6 +43,14 @@ INSTALLED_APPS = [
     #---- Third party ----#
     'django.contrib.gis'
 ]
+FUEL_OPTIMIZER = {
+    "MAX_RANGE_MILES": 500,          
+    "MPG": 10,                       
+    "MAX_STATION_DISTANCE_FROM_ROUTE_MILES": 25, 
+    "OSRM_BASE_URL": "http://router.project-osrm.org/route/v1/driving",
+    "NOMINATIM_URL": "https://nominatim.openstreetmap.org/search",
+    "NOMINATIM_USER_AGENT": "FuelOptimizer/1.0",
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -83,7 +91,7 @@ DATABASES = {
         "NAME": config("POSTGRES_DB"),
         "USER": config("POSTGRES_USER"),
         "PASSWORD": config("POSTGRES_PASSWORD"),
-        "HOST": "db",
+        "HOST": "192.168.49.1",
         "PORT": 5432,
     }
 }

@@ -1,27 +1,51 @@
 import logging
+import time
+
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderServiceError
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-DUMMY_LOCATIONS = {
-    "tomah_exit_143": (43.9786, -90.5040),
-    "chicago_il":     (41.8781, -87.6298),
-}
+geolocator = Nominatim(
+    user_agent=settings.NOMINATIM_USER_AGENT,
+    timeout=10,
+)
 
-DEFAULT_START = (46.8772, -96.7898)
-DEFAULT_END   = (41.8781, -87.6298)
+MAX_RETRIES = 3
+RETRY_DELAY = 2 
 
-_call_count = 0
 
 def geocode(location_string: str) -> tuple[float, float]:
-    global _call_count
-    _call_count += 1
+    """
+    Geocode a US location string to (latitude, longitude)
+    using Nominatim agent (geopy).
 
-    location_lower = location_string.lower()
-    for key, coords in DUMMY_LOCATIONS.items():
-        if key in location_lower:
-            logger.debug("Dummy geocode '%s' -> %s", location_string, coords)
-            return coords
+    Retries up to MAX_RETRIES times with exponential backoff
+    when Nominatim rate-limits (HTTP 509 / 429).
+    """
+    logger.debug("Geocoding: %s", location_string)
 
-    fallback = DEFAULT_START if _call_count % 2 == 1 else DEFAULT_END
-    logger.debug("Dummy geocode (fallback) '%s' -> %s", location_string, fallback)
-    return fallback
+    last_error = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            location = geolocator.geocode(location_string)
+            if not location:
+                raise ValueError(f"Could not geocode location: '{location_string}'")
+            logger.debug(
+                "Geocoded '%s' -> (%s, %s)",
+                location_string, location.latitude, location.longitude,
+            )
+            return location.latitude, location.longitude
+        except GeocoderServiceError as e:
+            last_error = e
+            delay = RETRY_DELAY * (2 ** (attempt - 1))
+            logger.warning(
+                "Nominatim rate-limited (attempt %d/%d): %s — retrying in %ds",
+                attempt, MAX_RETRIES, e, delay,
+            )
+            time.sleep(delay)
+
+    raise RuntimeError(
+        f"Nominatim still rate-limiting after {MAX_RETRIES} retries: {last_error}"
+    )

@@ -131,14 +131,14 @@ def optimize_fuel_stops(
 
     for i in range(n):
         if dp[i] == INF:
-            continue                  # node i was never reached
+            continue                  
         for j in range(i + 1, n):
             gap = nodes[j]["distance_from_start"] - nodes[i]["distance_from_start"]
 
             if gap <= 0:
                 continue
             if gap > max_range:
-                break                 # all further nodes are even farther
+                break                 
 
             fuel_needed = gap / mpg
             fuel_cost = fuel_needed * nodes[i]["price"]
@@ -170,7 +170,6 @@ def optimize_fuel_stops(
         idx = parent[idx]
     path_indices.reverse()
 
-    # Build human-readable fuel-stop list
     fuel_stops: list[dict] = []
     total_gallons = 0.0
 

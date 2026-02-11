@@ -21,13 +21,13 @@ def get_stations_along_route(
     route_points: list[tuple[float, float]],
     cumulative_distances: list[float],
     max_station_distance: float | None = None,
-    max_range: float | None = None,
 ) -> list[dict]:
     """
     Project gas stations from the database onto the route.
 
-    Only stations that the truck can actually reach from the start
-    (i.e. ``distance_from_start <= max_range``) are kept.
+    All stations close enough to the route are kept regardless of
+    distance from start.  The DP optimizer enforces the tank-range
+    constraint (consecutive stops ≤ 500 mi apart).
 
     Algorithm:
       1. Compute a bounding box around the route polyline.
@@ -36,8 +36,7 @@ def get_stations_along_route(
       4. For each station, find its closest route point and assign
          ``distance_from_start``.
       5. Remove stations that are too far from the route.
-      6. Remove stations beyond the truck's max range from start.
-      7. Sort by ``distance_from_start``.
+      6. Sort by ``distance_from_start``.
 
     Parameters
     ----------
@@ -48,9 +47,6 @@ def get_stations_along_route(
     max_station_distance :
         Maximum perpendicular distance (miles) from the route to keep
         a station.  Default from settings.
-    max_range :
-        Maximum range of the truck in miles (default from settings).
-        Stations beyond this distance from start are discarded.
 
     Returns
     -------
@@ -62,8 +58,6 @@ def get_stations_along_route(
     config = settings.FUEL_OPTIMIZER
     if max_station_distance is None:
         max_station_distance = config["MAX_STATION_DISTANCE_FROM_ROUTE_MILES"]
-    if max_range is None:
-        max_range = config["MAX_RANGE_MILES"]
 
     # ------------------------------------------------------------------
     # Step 1-2: Bounding box with padding
@@ -124,9 +118,7 @@ def get_stations_along_route(
                 best_dist = d
                 best_cum = cum_dist
 
-        # Step 5: Keep only stations close enough to the route
-        # Step 6: Keep only stations the truck can reach from start
-        if best_dist <= max_station_distance and best_cum <= max_range:
+        if best_dist <= max_station_distance:
             projected.append(
                 {
                     "id": station.opis_id,

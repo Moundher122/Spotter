@@ -31,7 +31,6 @@ class NavigationView(APIView):
             route_stations = stations.get_stations_along_route(
                 route_points=route["points"],
                 cumulative_distances=route["cumulative_distances"],
-                max_range=500,
             )
 
             result = optimizer.optimize_fuel_stops(

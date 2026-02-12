@@ -23,3 +23,4 @@ class NavigationOutputSerializer(serializers.Serializer):
     total_distance = serializers.FloatField()
     total_gallons = serializers.FloatField()
     encoded_polyline = serializers.CharField()
+    route_map = serializers.URLField(help_text="URL to the rendered route map image")

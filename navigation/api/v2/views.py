@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .serializers import NavigationInputSerializer, NavigationOutputSerializer
-from navigation.services import geocoding, provider_call, stations, optimizer
+from navigation.services import geocoding, provider_call, stations, optimizer, map_renderer
 
 import logging
 
@@ -40,7 +40,6 @@ class NavigationView(APIView):
             #for testing
             #start =(41.8781, -87.6298)
             #end = (35.2271, -80.8431)
-
             route = provider_call.get_route(
                 start_lat=start[0],
                 start_lng=start[1],
@@ -81,6 +80,10 @@ class NavigationView(APIView):
                 "total_gallons": dp_result["total_gallons"],
                 "fuel_stops": fuel_stops,
                 "route_polyline": real_polyline,
+                "route_map": map_renderer.render_route_map(
+                    encoded_polyline=real_polyline,
+                    fuel_stops=fuel_stops,
+                ),
             }
 
             output = NavigationOutputSerializer(result)

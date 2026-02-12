@@ -2,8 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from django.conf import settings
+
 from .serializers import NavigationInputSerializer, NavigationOutputSerializer
-from navigation.services import geocoding, provider_call, stations, optimizer
+from navigation.services import geocoding, provider_call, stations, optimizer, map_renderer
 
 import logging
 
@@ -24,7 +26,6 @@ class NavigationView(APIView):
             #for testing
             #start =(41.8781, -87.6298)
             #end = (35.2271, -80.8431)
-
             route = provider_call.get_route(
                 start_lat=start[0],
                 start_lng=start[1],
@@ -45,6 +46,14 @@ class NavigationView(APIView):
             )
 
             result["encoded_polyline"] = route["encoded_polyline"]
+
+            map_path = map_renderer.render_route_map(
+                encoded_polyline=route["encoded_polyline"],
+                fuel_stops=result["fuel_stops"],
+            )
+            result["route_map"] = request.build_absolute_uri(
+                settings.MEDIA_URL + map_path
+            )
 
             output = NavigationOutputSerializer(result)
             return Response(output.data, status=status.HTTP_200_OK)

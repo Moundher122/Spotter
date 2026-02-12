@@ -23,3 +23,4 @@ class NavigationOutputSerializer(serializers.Serializer):
     total_gallons = serializers.FloatField()
     fuel_stops = FuelStopSerializer(many=True)
     route_polyline = serializers.CharField()
+    route_map = serializers.URLField(help_text="URL to the rendered route map image")

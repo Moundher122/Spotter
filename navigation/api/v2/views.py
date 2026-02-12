@@ -35,9 +35,11 @@ class NavigationView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             data = serializer.validated_data
-
-            start =(41.8781, -87.6298)
-            end = (35.2271, -80.8431)
+            start=geocoding(data["start"])
+            end=geocoding(data["end"])
+            #for testing
+            #start =(41.8781, -87.6298)
+            #end = (35.2271, -80.8431)
 
             route = provider_call.get_route(
                 start_lat=start[0],

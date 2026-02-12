@@ -49,14 +49,9 @@ def optimize_fuel_stops(
     """
     config = settings.FUEL_OPTIMIZER
     if max_range is None:
-        max_range = config["MAX_RANGE_MILES"]       # 500
+        max_range = config["MAX_RANGE_MILES"]
     if mpg is None:
-        mpg = config["MPG"]                         # 10
-
-    # ──────────────────────────────────────────────────────────────────────
-    # Short-route fast path:  if the truck can cover the entire distance
-    # on a single tank, no fuel stop is needed → zero cost.
-    # ──────────────────────────────────────────────────────────────────────
+        mpg = config["MPG"]
     if total_distance <= max_range:
         total_gallons = round(total_distance / mpg, 2)
         logger.info(
@@ -70,13 +65,7 @@ def optimize_fuel_stops(
             "total_distance": round(total_distance, 1),
             "total_gallons": total_gallons,
         }
-
-    # ──────────────────────────────────────────────────────────────────────
-    # Build ordered node list:  Start  →  Stations  →  Destination
-    # ──────────────────────────────────────────────────────────────────────
     nodes: list[dict] = []
-
-    # Virtual start node (price = 0, no fuel purchase here)
     nodes.append(
         {
             "id": "start",
@@ -86,7 +75,6 @@ def optimize_fuel_stops(
         }
     )
 
-    # Real station nodes (already sorted by distance_from_start)
     for s in stations:
         nodes.append(
             {
@@ -100,7 +88,6 @@ def optimize_fuel_stops(
             }
         )
 
-    # Virtual destination node
     nodes.append(
         {
             "id": "destination",
@@ -113,17 +100,6 @@ def optimize_fuel_stops(
     n = len(nodes)
     logger.info("DP over %d nodes (start + %d stations + destination)", n, n - 2)
 
-    # ──────────────────────────────────────────────────────────────────────
-    # Forward DP
-    #
-    #   dp[i] = minimum fuel cost to reach node i
-    #
-    #   For each node i (in increasing distance order):
-    #       For each node j reachable from i  (0 < gap ≤ max_range):
-    #           fuel_needed = gap / mpg          (gallons)
-    #           fuel_cost   = fuel_needed × price_at_node_i
-    #           dp[j] = min(dp[j], dp[i] + fuel_cost)
-    # ──────────────────────────────────────────────────────────────────────
     INF = float("inf")
     dp = [INF] * n
     parent = [-1] * n
@@ -131,14 +107,14 @@ def optimize_fuel_stops(
 
     for i in range(n):
         if dp[i] == INF:
-            continue                  
+            continue
         for j in range(i + 1, n):
             gap = nodes[j]["distance_from_start"] - nodes[i]["distance_from_start"]
 
             if gap <= 0:
                 continue
             if gap > max_range:
-                break                 
+                break
 
             fuel_needed = gap / mpg
             fuel_cost = fuel_needed * nodes[i]["price"]
@@ -148,9 +124,6 @@ def optimize_fuel_stops(
                 dp[j] = candidate
                 parent[j] = i
 
-    # ──────────────────────────────────────────────────────────────────────
-    # Check feasibility
-    # ──────────────────────────────────────────────────────────────────────
     dest_idx = n - 1
     if dp[dest_idx] == INF:
         raise ValueError(
@@ -159,10 +132,6 @@ def optimize_fuel_stops(
             f"There may be a gap between consecutive stations exceeding "
             f"the vehicle range."
         )
-
-    # ──────────────────────────────────────────────────────────────────────
-    # Back-trace the optimal path
-    # ──────────────────────────────────────────────────────────────────────
     path_indices: list[int] = []
     idx = dest_idx
     while idx != -1:
@@ -184,7 +153,6 @@ def optimize_fuel_stops(
         fuel_cost = fuel_needed * node_i["price"]
         total_gallons += fuel_needed
 
-        # Only include real stations (not start/destination)
         if not node_i["is_virtual"]:
             fuel_stops.append(
                 {

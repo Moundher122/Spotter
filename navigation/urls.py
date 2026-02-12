@@ -1,5 +1,6 @@
-from django.urls import path
-from . import views
+from django.urls import path, include
+
 urlpatterns = [
-    path('navigate/', views.NavigationView.as_view(), name='navigate'),
+    path('v1/', include('navigation.api.v1.urls')),
+    path('v2/', include('navigation.api.v2.urls')),
 ]

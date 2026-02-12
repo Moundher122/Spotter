@@ -13,13 +13,20 @@ Given a start and end point, it returns the optimal set of gas stations to stop 
 4. **Optimize** which stations to stop at using dynamic programming to get the lowest total fuel cost.
 5. **Return** the optimal stops, cost breakdown, and route polyline.
 
-The key assumption is that stations are treated as being **on the route** — each station is projected onto the nearest point of the route and assigned a mile marker. The optimizer then ensures no two consecutive stops are more than 500 miles apart (the truck's tank range).
+There are two API versions:
+
+- **[v1](v1.md)** — Single OSRM call, nearest-point station projection, returns the base route geometry.
+- **[v2](v2.md)** — Two OSRM calls, perpendicular segment projection for better accuracy, returns the real driving geometry through fuel stops including detour distances.
+
+See each doc for full algorithm details, function-by-function breakdowns, and response formats.
 
 ---
 
 ## API
 
-### `POST /api/navigate/`
+### v1: `POST /api/v1/navigate/`
+
+Full documentation: **[v1.md](v1.md)**
 
 **Request:**
 ```json
@@ -32,24 +39,32 @@ The key assumption is that stations are treated as being **on the route** — ea
 **Response:**
 ```json
 {
-  "fuel_stops": [
-    {
-      "station_id": 12345,
-      "name": "Pilot Travel Center",
-      "lat": 40.123,
-      "lng": -80.456,
-      "distance_from_start": 320.5,
-      "price_per_gallon": 3.19,
-      "gallons": 32.05,
-      "cost": 102.24
-    }
-  ],
+  "fuel_stops": [ ... ],
   "total_fuel_cost": 487.32,
   "total_distance": 2790.4,
   "total_gallons": 279.04,
   "encoded_polyline": "a~l~Fjk~uOwHJy@..."
 }
 ```
+
+### v2: `POST /api/v2/navigate/`
+
+Full documentation: **[v2.md](v2.md)**
+
+**Request:** same as v1.
+
+**Response:**
+```json
+{
+  "total_distance_miles": 2805.3,
+  "total_fuel_cost": 487.32,
+  "total_gallons": 279.04,
+  "fuel_stops": [ ... ],
+  "route_polyline": "a~l~Fjk~uOwHJy@..."
+}
+```
+
+Key differences: `total_distance_miles` and `route_polyline` come from a second OSRM call that routes through the actual fuel stops, giving real driving distance including detours.
 
 ---
 
@@ -75,15 +90,16 @@ The key assumption is that stations are treated as being **on the route** — ea
 ```
 spotter/
 ├── spotter/              # Django project settings & URL config
-├── navigation/           # Main app — API view, services, tests
-│   ├── views.py          # POST /api/navigate/ endpoint
-│   ├── serlaizers.py     # Input/output validation
+├── navigation/           # Main app — API views, services, tests
+│   ├── api/
+│   │   ├── v1/               # v1 endpoint (views, serializers, urls)
+│   │   └── v2/               # v2 endpoint (views, serializers, urls)
 │   ├── services/
 │   │   ├── geocoding.py      # Place name → (lat, lng)
-│   │   ├── provider_call.py  # OSRM route fetching
-│   │   ├── stations.py       # Find & project stations onto route
+│   │   ├── provider_call.py  # OSRM route fetching (base + waypoints)
+│   │   ├── stations.py       # Find & project stations (v1 + v2 algorithms)
 │   │   ├── optimizer.py      # Forward DP for cheapest fuel stops
-│   │   ├── helper.py         # Haversine distance, cumulative distances
+│   │   ├── helper.py         # Haversine, segment projection, cumulative distances
 │   │   └── converter.py      # Unit conversions (meters ↔ miles)
 │   └── tests/
 ├── gasstation/           # Gas station model + CSV import command
@@ -91,6 +107,8 @@ spotter/
 │   └── management/commands/import_gasstations.py
 ├── Data/
 │   └── gasstations.csv   # Station dataset (OPIS)
+├── v1.md                 # v1 algorithm documentation
+├── v2.md                 # v2 algorithm documentation
 ├── docker-compose.yaml   # PostGIS database
 ├── dockerfile            # App container (Python + GDAL)
 └── pyproject.toml        # Dependencies
@@ -125,7 +143,13 @@ uv run manage.py runserver
 
 ### 4. Test the API
 ```bash
-curl -X POST http://localhost:8000/api/navigate/ \
+# v1
+curl -X POST http://localhost:8000/api/v1/navigate/ \
+  -H "Content-Type: application/json" \
+  -d '{"start": "New York, NY", "end": "Los Angeles, CA"}'
+
+# v2
+curl -X POST http://localhost:8000/api/v2/navigate/ \
   -H "Content-Type: application/json" \
   -d '{"start": "New York, NY", "end": "Los Angeles, CA"}'
 ```

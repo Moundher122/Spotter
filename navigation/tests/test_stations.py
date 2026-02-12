@@ -28,7 +28,6 @@ class StationsServiceTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         """Create a few gas stations for testing."""
-        # Station near a straight-line route from (40, -90) to (40, -80)
         GasStation.objects.create(
             opis_id=1,
             name="Near Route Station",
@@ -37,7 +36,7 @@ class StationsServiceTests(TestCase):
             state="IL",
             rack_id=100,
             retail_price=3.50,
-            location=Point(-85.0, 40.0, srid=4326),  # on the route
+            location=Point(-85.0, 40.0, srid=4326),
         )
         GasStation.objects.create(
             opis_id=2,
@@ -47,7 +46,7 @@ class StationsServiceTests(TestCase):
             state="TX",
             rack_id=200,
             retail_price=2.99,
-            location=Point(-95.0, 30.0, srid=4326),  # far off route
+            location=Point(-95.0, 30.0, srid=4326),
         )
         GasStation.objects.create(
             opis_id=3,
@@ -57,7 +56,7 @@ class StationsServiceTests(TestCase):
             state="OH",
             rack_id=300,
             retail_price=3.20,
-            location=Point(-82.0, 40.0, srid=4326),  # on the route
+            location=Point(-82.0, 40.0, srid=4326),
         )
 
     def _simple_route(self):
@@ -106,7 +105,6 @@ class HaversineTests(TestCase):
         self.assertAlmostEqual(haversine(40, -90, 40, -90), 0.0, places=5)
 
     def test_known_distance(self):
-        # New York to Los Angeles ≈ 2,451 miles (great-circle)
         d = haversine(40.7128, -74.0060, 34.0522, -118.2437)
         self.assertAlmostEqual(d, 2451, delta=50)
 

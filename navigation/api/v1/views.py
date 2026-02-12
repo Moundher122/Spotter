@@ -1,8 +1,10 @@
 from rest_framework.views import APIView
-from .serlaizers import NavigationInputSerializer, NavigationOutputSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from .services import geocoding, provider_call, stations, optimizer
+
+from .serializers import NavigationInputSerializer, NavigationOutputSerializer
+from navigation.services import geocoding, provider_call, stations, optimizer
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,8 +20,9 @@ class NavigationView(APIView):
 
             data = serializer.validated_data
 
-            start = geocoding.geocode(data["start"])
-            end = geocoding.geocode(data["end"])
+
+            start =(41.8781, -87.6298)
+            end = (35.2271, -80.8431)
 
             route = provider_call.get_route(
                 start_lat=start[0],

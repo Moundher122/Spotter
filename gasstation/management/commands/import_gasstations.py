@@ -22,7 +22,6 @@ def split_address_only(address_part):
     if "&" not in address_part:
         return [address_part.strip()]
 
-    # Remove EXIT
     address_part = re.sub(
         r"EXIT\s*\d+[-A-Z]*",
         "",
@@ -30,7 +29,6 @@ def split_address_only(address_part):
         flags=re.IGNORECASE
     )
 
-    # Remove commas
     address_part = address_part.replace(",", "")
 
     roads = [r.strip() for r in address_part.split("&") if r.strip()]

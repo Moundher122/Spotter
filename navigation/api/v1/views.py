@@ -21,8 +21,8 @@ class NavigationView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             data = serializer.validated_data
-            start=geocoding(data["start"])
-            end=geocoding(data["end"])
+            start=geocoding.geocode(data["start"])
+            end=geocoding.geocode(data["end"])
             #for testing
             #start =(41.8781, -87.6298)
             #end = (35.2271, -80.8431)
